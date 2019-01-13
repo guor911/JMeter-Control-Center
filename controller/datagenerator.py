@@ -14,7 +14,8 @@ from controller.models import TestRunning
 from analyzer.models import Project, Test, Action, \
     TestActionData, TestAggregate, TestData, \
     Server, ServerMonitoringData
-reload(sys)
+import importlib
+importlib.reload(sys)
 sys.setdefaultencoding('utf-8')
 
 
@@ -47,13 +48,13 @@ def get_dir_size(path):
 def zip_results_file(file):
     if os.path.exists(file + '.zip'):
         os.remove(file + '.zip')
-    print "Move results file " + file + " to zip archive"
+    print("Move results file " + file + " to zip archive")
     with zipfile.ZipFile(
             file + ".zip", "w", zipfile.ZIP_DEFLATED,
             allowZip64=True) as zip_file:
         zip_file.write(file, basename(file))
     os.remove(file)
-    print "File was packed, original file was deleted"
+    print("File was packed, original file was deleted")
 
 
 dateconv = np.vectorize(datetime.datetime.fromtimestamp)
@@ -101,14 +102,14 @@ def add_running_test(root):
                 display_name = params.text
     project_name = re.search('/([^/]+)/builds', root).group(1)
     if not Project.objects.filter(project_name=project_name).exists():
-        print "Adding new project: " + project_name
+        print("Adding new project: " + project_name)
         project = Project(
             project_name=project_name,
             show=True
         )
         project.save()
         project_id = project.id
-    print "Project_id: " + str(project_id)
+    print("Project_id: " + str(project_id))
     build_number = int(
         re.search('/builds/(\d+)', root).group(1))
     running_test = TestRunning(
@@ -130,7 +131,7 @@ def add_running_test(root):
 
 
 def generate_data(t_id):
-    print "Parse and generate test data: " + str(t_id)
+    print("Parse and generate test data: " + str(t_id))
     test_running = TestRunning.objects.get(id=t_id)
     if not Test.objects.filter(path=test_running.workspace).exists():
         test = Test(
@@ -150,7 +151,7 @@ def generate_data(t_id):
     if os.path.exists(jmeter_results_file):
         df = pd.DataFrame()
         if os.stat(jmeter_results_file).st_size > 1000007777:
-            print "Executing a parse for a huge file"
+            print("Executing a parse for a huge file")
             chunks = pd.read_table(
                 jmeter_results_file, sep=',', index_col=0, chunksize=3000000)
             for chunk in chunks:
@@ -160,7 +161,7 @@ def generate_data(t_id):
                 ]
                 chunk = chunk[~chunk['URL'].str.contains('exclude_')]
                 df = df.append(chunk)
-                print "Parsing a huge file,size: " + str(df.size)
+                print("Parsing a huge file,size: " + str(df.size))
         else:
             df = pd.read_csv(
                 jmeter_results_file, index_col=0, low_memory=False)
@@ -178,21 +179,20 @@ def generate_data(t_id):
         #convert timestamps to normal date/time
         df.index = pd.to_datetime(dateconv((df.index.values / 1000)))
         num_lines = df['response_time'].count()
-        print "Number of lines in filrue: %d." % num_lines
+        print("Number of lines in filrue: %d." % num_lines)
         unique_urls = df['url'].unique()
         for url in unique_urls:
             url = str(url)
             if not Action.objects.filter(
                     url=url, project_id=project_id).exists():
-                print "Adding new action: " + str(url) + " project_id: " + str(
-                    project_id)
+                print("Adding new action: " + str(url) + " project_id: " + str(project_id))
                 a = Action(url=url, project_id=project_id)
                 a.save()
             a = Action.objects.get(url=url, project_id=project_id)
             action_id = a.id
             if not TestActionData.objects.filter(
                     action_id=action_id, test_id=test_id).exists():
-                print "Adding action data: " + url
+                print("Adding action data: " + url)
                 df_url = df[(df.url == url)]
                 url_data = pd.DataFrame()
                 df_url_gr_by_ts = df_url.groupby(pd.TimeGrouper(freq='1Min'))
@@ -247,7 +247,7 @@ def generate_data(t_id):
                 test_id=output_json[row]['test_id'], data=data)
             test_data.save()
     else:
-        print "Result file does not exist"
+        print("Result file does not exist")
 
     monitoring_results_file = test_running.monitoring_file_dest
     if os.path.exists(monitoring_results_file):
@@ -275,7 +275,7 @@ def generate_data(t_id):
         for server_ in unique_servers:
             if not Server.objects.filter(
                     server_name=server_).exists():
-                print "Adding new server: " + server_
+                print("Adding new server: " + server_)
                 s = Server(
                     server_name=server_
                 )
@@ -310,6 +310,6 @@ def generate_data(t_id):
                     )
                     server_monitoring_data.save()
     else:
-        print "Result file does not exist"
+        print("Result file does not exist")
 
     return True

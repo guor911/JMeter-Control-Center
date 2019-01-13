@@ -10,6 +10,7 @@ import datetime
 from subprocess import call
 from sys import platform as _platform
 from django.db.models.expressions import F, RawSQL, Value
+from controller.views.data_generator import *
 import select
 
 import shutil
@@ -184,7 +185,8 @@ def jmeter_param_delete(request, project_id, param_id):
     project = Project.objects.values().get(id=project_id)
     jmeter_params = json.loads(
         json.dumps(project['jmeter_parameters'], indent=4, sort_keys=True))
-    for i in xrange(len(jmeter_params)):
+    # for i in xrange(len(jmeter_params)):
+    for i in range(len(jmeter_params)):
         if int(jmeter_params[i]['id']) == int(param_id):
             jmeter_params.pop(i)
             break
@@ -203,7 +205,8 @@ def script_param_delete(request, project_id, param_id):
     project = Project.objects.values().get(id=project_id)
     script_params = json.loads(
         json.dumps(project['script_parameters'], indent=4, sort_keys=True))
-    for i in xrange(len(script_params)):
+    # for i in xrange(len(script_params)):
+    for i in range(len(script_params)):
         if int(script_params[i]['id']) == int(param_id):
             script_params.pop(i)
             break
@@ -223,7 +226,8 @@ def jri_delete(request, project_id, jri_id):
     jris = json.loads(
         json.dumps(
             project['jmeter_remote_instances'], indent=4, sort_keys=True))
-    for i in xrange(len(jris)):
+    # for i in xrange(len(jris)):
+    for i in range(len(jris)):
         if int(jris[i]['id']) == int(jri_id):
             jris.pop(i)
             break
